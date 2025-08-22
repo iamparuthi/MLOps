@@ -19,3 +19,18 @@ class PrepareBaseModelConfig:
     params_include_top: bool
     params_weights: str
     params_classes: int
+
+@dataclass(frozen=True)
+class TrainingConfig:
+    root_dir: str
+    trained_model_path: str
+    updated_base_model_path: str
+    training_data: str
+    params_epochs: int
+    params_batch_size: int
+    params_is_augmentation: bool
+    params_image_size: list
+    params_learning_rate: float  # 👈 Add this
+    classes: int
+    include_top: bool
+    weights: str
