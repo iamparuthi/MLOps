@@ -1,0 +1,8 @@
+artifacts_root: artifacts
+
+
+data_ingestion:
+  root_dir: artifacts/data_ingestion
+  source_URL: https://demomlopsdataset.blob.core.windows.net/ct-scan/dataset_mlops.zip?sp=r&st=2025-08-22T07:35:52Z&se=2025-08-31T15:50:52Z&spr=https&sv=2024-11-04&sr=b&sig=0Ilvw47wJM8YkfjrTOugfFUpJCGr7fqXnMFXNZzJcBY%3D
+  local_data_file: artifacts/data_ingestion/data.zip
+  unzip_dir: artifacts/data_ingestion
