@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
-
+from typing import Optional, Dict, List
 
 @dataclass(frozen=True)
 class DataIngestionConfig:
@@ -34,3 +34,13 @@ class TrainingConfig:
     classes: int
     include_top: bool
     weights: str
+
+
+@dataclass(frozen=True)
+class EvaluationConfig:
+    path_of_model: Path
+    training_data: Path
+    all_params: any
+    params_image_size: List[int]
+    params_batch_size: int
+    mlflow_uri: Optional[str] = None  # optional override
