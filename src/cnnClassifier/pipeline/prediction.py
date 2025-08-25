@@ -15,7 +15,7 @@ class PredictionPipeline:
         ## load model
         
         # model = load_model(os.path.join("artifacts","training", "model.h5"))
-        model = load_model(os.path.join("model", "model_20250825_122457.keras"))
+        model = load_model(os.path.join("model", "model_20250825_154034.keras"))
 
         imagename = self.filename
         test_image = image.load_img(imagename, target_size = (224,224))

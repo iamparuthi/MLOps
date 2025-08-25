@@ -32,14 +32,14 @@ class EvaluationPipeline:
         logger.info(">>> Logging metrics to MLflow...")
         evaluation.log_into_mlflow()
 
-        logger.info(">>> Evaluation pipeline completed ✅")
+        logger.info(">>> Evaluation pipeline completed ")
 
 if __name__ == "__main__":
     try:
         logger.info(f">>>>>> Stage: {STAGE_NAME} started <<<<<<")
         pipeline = EvaluationPipeline()
         pipeline.main()
-        logger.info(f">>>>>> Stage: {STAGE_NAME} completed ✅ <<<<<<\n\nx==========x")
+        logger.info(f">>>>>> Stage: {STAGE_NAME} completed <<<<<<\n\nx==========x")
     except Exception as e:
         logger.exception(e)
         raise e
