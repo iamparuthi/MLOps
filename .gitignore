@@ -209,3 +209,5 @@ __marimo__/
 cancer/*
 artifacts/data_ingestion/
 artifacts/prepare_base_model/
+artifacts/trained_model/
+model/*
