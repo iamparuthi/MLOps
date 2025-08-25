@@ -1,71 +1,74 @@
+import os
+import json
 import tensorflow as tf
+from cnnClassifier.config.configuration import ConfigurationManager
+from cnnClassifier import logger
 from pathlib import Path
-import mlflow
-from urllib.parse import urlparse
-from cnnClassifier.entity.config_entity import EvaluationConfig
-from cnnClassifier.utils.common import save_json
 
 
 class Evaluation:
-    def __init__(self, config: EvaluationConfig):
+    def __init__(self, config, label_mode='int'):
         self.config = config
-        self.model = None
-        self.valid_generator = None
-        self.score = None  # [loss, accuracy]
-
-    def _valid_generator(self):
-        datagenerator_kwargs = dict(
-            rescale=1.0 / 255,
-            validation_split=0.30,
+        # Load the trained model
+        self.model = tf.keras.models.load_model(config.trained_model_path)
+        
+        # Load the test dataset with integer labels to match sparse_categorical_crossentropy
+        self.test_data = tf.keras.preprocessing.image_dataset_from_directory(
+            config.test_data_path,
+            image_size=(config.params_image_size[0], config.params_image_size[1]),
+            batch_size=config.params_batch_size,
+            label_mode=label_mode,  # Use integer labels for sparse loss
+            shuffle=False      # Important: don't shuffle for evaluation
         )
-        dataflow_kwargs = dict(
-            target_size=self.config.params_image_size[:-1],
-            batch_size=self.config.params_batch_size,
-            interpolation="bilinear",
-        )
+        self.scores = {}
 
-        valid_datagenerator = tf.keras.preprocessing.image.ImageDataGenerator(
-            **datagenerator_kwargs
-        )
+        # Optional: print class mapping
+        class_names = self.test_data.class_names
+        logger.info(f"Class indices mapping: {dict(zip(class_names, range(len(class_names))))}")
 
-        self.valid_generator = valid_datagenerator.flow_from_directory(
-            directory=self.config.training_data,
-            subset="validation",
-            shuffle=False,
-            **dataflow_kwargs,
-        )
-
-    @staticmethod
-    def load_model(path: Path) -> tf.keras.Model:
-        return tf.keras.models.load_model(path)
-
-    def evaluation(self):
-        self.model = self.load_model(self.config.path_of_model)
-        self._valid_generator()
-        self.score = self.model.evaluate(self.valid_generator, verbose=1)
-        self.save_score()
+    def evaluate_model(self):
+        logger.info("🔍 Evaluating the model on test dataset...")
+        loss, accuracy = self.model.evaluate(self.test_data)
+        self.scores = {"loss": float(loss), "accuracy": float(accuracy)}
+        logger.info(f"Model Evaluation Scores: {self.scores}")
 
     def save_score(self):
-        scores = {"loss": float(self.score[0]), "accuracy": float(self.score[1])}
-        save_json(path=Path("scores.json"), data=scores)
+        os.makedirs(os.path.dirname(self.config.metric_file_name), exist_ok=True)
+        with open(self.config.metric_file_name, "w") as f:
+            json.dump(self.scores, f, indent=4)
+        logger.info(f"Scores saved to: {self.config.metric_file_name}")
+
+    def save_model_for_dvc(self):
+        """Save model locally so DVC can version-control it"""
+        save_path = Path(self.config.model_dvc_path)
+        save_path.parent.mkdir(parents=True, exist_ok=True)
+        self.model.save(save_path)   # saves in Keras native format (.keras or .h5)
+        logger.info(f"Model saved for DVC tracking at: {save_path}")
+        return save_path
 
     def log_into_mlflow(self):
-        """
-        Logs params, metrics and model to MLflow (DagsHub).
-        """
-        tracking_scheme = urlparse(mlflow.get_tracking_uri()).scheme
+        import mlflow
+        #import mlflow.keras
 
-        with mlflow.start_run(run_name="evaluation"):
-            # log hyperparams (from params.yaml)
-            mlflow.log_params(self.config.all_params)
+        logger.info("📦 Logging metrics and model into MLflow...")
+        mlflow.log_metrics(self.scores)
+        #mlflow.keras.log_model(self.model, "model")
+        logger.info("Model & metrics logged into MLflow.")
 
-            # log metrics
-            mlflow.log_metrics(
-                {"loss": float(self.score[0]), "accuracy": float(self.score[1])}
-            )
 
-            # ✅ For DagsHub → only log model file as artifact
-            mlflow.log_artifact(
-                local_path=str(self.config.path_of_model),
-                artifact_path="model"
-            )
+if __name__ == "__main__":
+    try:
+        logger.info(">>>> Stage: Evaluation started <<<<")
+
+        config = ConfigurationManager().get_evaluation_config()
+        eval = Evaluation(config)
+
+        eval.evaluate_model()
+        eval.save_score()
+        eval.log_into_mlflow()
+
+        logger.info(">>>> Stage: Evaluation completed <<<<\n\n")
+
+    except Exception as e:
+        logger.exception(e)
+        raise e

@@ -86,12 +86,27 @@ class ConfigurationManager:
         return training_config
 
     def get_evaluation_config(self) -> EvaluationConfig:
+        config = self.config.evaluation  # 👈 use evaluation section from yaml
+        trained_model_path = self.get_latest_model(Path(config["path_of_model"]))
+        create_directories([os.path.dirname(config.metric_file_name)])  # ensure dir exists
+
         eval_config = EvaluationConfig(
-            path_of_model=Path("artifacts/trained_model/model.h5"),
-            training_data=Path("artifacts/data_ingestion/dataset_mlops"),
+            path_of_model=Path(self.config.training.trained_model_path),
+            training_data=Path(self.config.data_ingestion.unzip_dir) / "dataset_mlops",
             all_params=self.params,
             params_image_size=self.params.IMAGE_SIZE,
             params_batch_size=self.params.BATCH_SIZE,
-            mlflow_uri=None  # set if using MLflow remote tracking
+            mlflow_uri=None,
+            trained_model_path=trained_model_path,
+            test_data_path=Path(config.test_data_path),
+            metric_file_name=Path(config.metric_file_name)  # 👈 pass scores.json path
         )
         return eval_config
+    
+    def get_latest_model(self, model_dir: Path) -> Path:
+        models = list(model_dir.glob("*.h5"))  # or "*.pt"
+        if not models:
+            raise FileNotFoundError(f"No model files found in {model_dir}")
+        # Sort by modified time and return latest
+        latest_model = max(models, key=os.path.getmtime)
+        return latest_model

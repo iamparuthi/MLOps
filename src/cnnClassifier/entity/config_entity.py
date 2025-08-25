@@ -43,4 +43,8 @@ class EvaluationConfig:
     all_params: any
     params_image_size: List[int]
     params_batch_size: int
+    metric_file_name: Path
+    trained_model_path: Path
+    test_data_path: Path
     mlflow_uri: Optional[str] = None  # optional override
+    

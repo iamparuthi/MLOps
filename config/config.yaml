@@ -17,3 +17,9 @@ prepare_base_model:
 training:
   root_dir: artifacts/trained_model
   trained_model_path: artifacts/trained_model/model.h5
+
+evaluation:
+  metric_file_name: evaluation/scores.json
+  trained_model_path: artifacts/trained_model
+  path_of_model: artifacts/trained_model  # Add this line
+  test_data_path: artifacts/data_ingestion/dataset_mlops
