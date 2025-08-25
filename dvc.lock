@@ -36,7 +36,7 @@ stages:
         - 224
         - 3
         INCLUDE_TOP: false
-        LEARNING_RATE: 0.001
+        LEARNING_RATE: 1e-05
         WEIGHTS: imagenet
     outs:
     - path: artifacts/prepare_base_model
@@ -45,8 +45,7 @@ stages:
       size: 118073512
       nfiles: 2
   training:
-    cmd: "python src/cnnClassifier/pipeline/stage_model_train_03.py\ndvc commit artifacts/trained_model\n\
-      dvc push\n"
+    cmd: python src/cnnClassifier/pipeline/stage_model_train_03.py
     deps:
     - path: artifacts/data_ingestion/dataset_mlops
       hash: md5
@@ -69,7 +68,7 @@ stages:
     params:
       params.yaml:
         AUGMENTATION: true
-        BATCH_SIZE: 16
+        BATCH_SIZE: 10
         EPOCHS: 5
         IMAGE_SIZE:
         - 224
@@ -78,9 +77,9 @@ stages:
     outs:
     - path: artifacts/trained_model/
       hash: md5
-      md5: b311df1579a5b8d9b233cf89ab5ee777.dir
-      size: 119102480
-      nfiles: 2
+      md5: c55e748a69828084bd8df5d9f778d1c0.dir
+      size: 297748103
+      nfiles: 5
   evaluation:
     cmd: python src/cnnClassifier/pipeline/stage_evaluation_04.py
     deps:
@@ -91,9 +90,9 @@ stages:
       nfiles: 343
     - path: artifacts/trained_model/
       hash: md5
-      md5: d913cc7e422ebc0d3bcc1432b79a0bfd.dir
-      size: 119102480
-      nfiles: 2
+      md5: c55e748a69828084bd8df5d9f778d1c0.dir
+      size: 297748103
+      nfiles: 5
     - path: config/config.yaml
       hash: md5
       md5: de68751efa28ac69d1da9c8c7add139c
@@ -104,7 +103,7 @@ stages:
       size: 1540
     params:
       params.yaml:
-        BATCH_SIZE: 16
+        BATCH_SIZE: 10
         IMAGE_SIZE:
         - 224
         - 224
@@ -112,5 +111,5 @@ stages:
     outs:
     - path: evaluation/scores.json
       hash: md5
-      md5: 04ce457eba756f46c993d679ad93c1b8
+      md5: 6f1d1938459fb28768290f32604ec0e7
       size: 73
